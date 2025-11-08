@@ -1,8 +1,10 @@
 import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { TokenPayload } from "src/common/types/token";
+import { generateAccessToken, generateRefreshToken } from "src/common/utils/jwt";
 import db from "src/db/drizzle";
-import { users } from "src/db/schema";
+import { refreshTokens, users } from "src/db/schema";
 
 import { LoginDto, RegisterDto } from "./auth.dto";
 
@@ -26,20 +28,48 @@ export class AuthService {
 
   async login(loginDto: LoginDto) {
     const { email, password } = loginDto;
+    const error = new NotFoundException("Wrong email or password.");
 
-    const [foundUser] = await db
+    const [existingUser] = await db
       .select({ id: users.id, password: users.password })
       .from(users)
       .where(eq(users.email, email))
       .limit(1);
 
-    if (!foundUser) {
-      throw new NotFoundException("Wrong email or password.");
+    if (!existingUser) {
+      throw error;
     }
 
-    const isPasswordMatch = await this.comparePassword(password, foundUser.password);
+    const isPasswordMatch = await this.comparePassword(password, existingUser.password);
 
-    console.log(isPasswordMatch);
+    if (!isPasswordMatch) {
+      throw error;
+    }
+
+    const { accessToken } = await this.refreshTokensForUser(existingUser.id);
+
+    return { accessToken };
+  }
+
+  private async refreshTokensForUser(userId: number) {
+    await this.removeUserRefreshTokens(userId);
+
+    const payload: TokenPayload = { userId };
+
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    await this.addRefreshToken(userId, refreshToken);
+
+    return { accessToken, refreshToken };
+  }
+
+  private async addRefreshToken(userId: number, refreshToken: string) {
+    await db.insert(refreshTokens).values({ token: refreshToken, userId });
+  }
+
+  private async removeUserRefreshTokens(userId: number) {
+    await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
   }
 
   private async hashPassword(password: string) {
