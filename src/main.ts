@@ -1,13 +1,12 @@
+import { ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
-import { drizzle } from "drizzle-orm/node-postgres";
 
 import { AppModule } from "./app.module";
-import { CONFIG } from "./config/configuration";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  drizzle(CONFIG.DATABASE_URL);
+  app.useGlobalPipes(new ValidationPipe());
 
   await app.listen(process.env.PORT ?? 3000);
 }
