@@ -1,8 +1,17 @@
-import { ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  ConflictException,
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 import { TokenPayload } from "src/common/types/token";
-import { generateAccessToken, generateRefreshToken } from "src/common/utils/jwt";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} from "src/common/utils/jwt";
 import db from "src/db/drizzle";
 import { refreshTokens, users } from "src/db/schema";
 
@@ -46,9 +55,30 @@ export class AuthService {
       throw error;
     }
 
-    const { accessToken } = await this.refreshTokensForUser(existingUser.id);
+    const { accessToken, refreshToken } = await this.refreshTokensForUser(existingUser.id);
 
-    return { accessToken };
+    return { accessToken, refreshToken };
+  }
+
+  async refreshAccessToken(refreshToken: string) {
+    const error = new ForbiddenException("Refresh token expired.");
+    try {
+      const data = verifyRefreshToken(refreshToken);
+
+      const userId = data.userId;
+      const existingRefreshToken = await this.getRefreshTokenFromDb(refreshToken);
+
+      if (!existingRefreshToken) {
+        throw error;
+      }
+
+      const tokenPayload: TokenPayload = { userId };
+      const accessToken = generateAccessToken(tokenPayload);
+
+      return { accessToken };
+    } catch {
+      throw error;
+    }
   }
 
   private async refreshTokensForUser(userId: number) {
@@ -62,6 +92,16 @@ export class AuthService {
     await this.addRefreshToken(userId, refreshToken);
 
     return { accessToken, refreshToken };
+  }
+
+  private async getRefreshTokenFromDb(refreshToken: string) {
+    const [token] = await db
+      .select()
+      .from(refreshTokens)
+      .where(eq(refreshTokens.token, refreshToken))
+      .limit(1);
+
+    return token;
   }
 
   private async addRefreshToken(userId: number, refreshToken: string) {
