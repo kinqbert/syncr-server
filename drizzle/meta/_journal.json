@@ -15,6 +15,13 @@
       "when": 1763046678016,
       "tag": "0001_flat_smiling_tiger",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1763216470548,
+      "tag": "0002_windy_shatterstar",
+      "breakpoints": true
     }
   ]
 }
