@@ -1,19 +1,16 @@
 import {
   ConflictException,
-  ForbiddenException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from "@nestjs/common";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import { sha256 } from "js-sha256";
 import { TokenPayload } from "src/common/types/token";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-  verifyRefreshToken,
-} from "src/common/utils/jwt";
+import { generateAccessToken, generateRefreshToken } from "src/common/utils/jwt";
 import db from "src/db/drizzle";
-import { refreshTokens, users } from "src/db/schema";
+import { users, userSessions } from "src/db/schema";
 
 import { LoginDto, RegisterDto } from "./auth.dto";
 
@@ -55,61 +52,90 @@ export class AuthService {
       throw error;
     }
 
-    const { accessToken, refreshToken } = await this.refreshTokensForUser(existingUser.id);
+    const userId = existingUser.id;
 
-    return { accessToken, refreshToken };
+    const tokenPayload = { userId };
+
+    const { accessToken, refreshToken } = this.generateTokens(tokenPayload);
+    const sessionId = await this.createSessionForUser(userId, refreshToken);
+
+    return { accessToken, refreshToken, sessionId };
   }
 
-  async refreshAccessToken(refreshToken: string) {
-    const error = new ForbiddenException("Refresh token expired.");
-    try {
-      const data = verifyRefreshToken(refreshToken);
+  async refreshTokens(refreshToken: string, sessionId: string) {
+    const error = new UnauthorizedException("Refresh token expired.");
 
-      const userId = data.userId;
-      const existingRefreshToken = await this.getRefreshTokenFromDb(refreshToken);
+    const userSession = await this.getSessionById(sessionId);
 
-      if (!existingRefreshToken) {
-        throw error;
-      }
-
-      const tokenPayload: TokenPayload = { userId };
-      const accessToken = generateAccessToken(tokenPayload);
-
-      return { accessToken };
-    } catch {
+    if (!userSession) {
       throw error;
     }
+
+    const hashedRefreshToken = this.hashRefreshToken(refreshToken);
+    const hashesMatch = userSession.refreshTokenHash === hashedRefreshToken;
+    const isExpired = new Date() > new Date(userSession.expiresAt);
+
+    if (!hashesMatch || isExpired) {
+      throw error;
+    }
+
+    const tokenPayload: TokenPayload = { userId: userSession.userId };
+
+    const newTokens = this.generateTokens(tokenPayload);
+
+    await this.updateRefreshTokenForSession(userSession.id, newTokens.refreshToken);
+
+    return newTokens;
   }
 
-  private async refreshTokensForUser(userId: number) {
-    await this.removeUserRefreshTokens(userId);
+  async logout(sessionId: string) {
+    await this.deleteSession(sessionId);
+  }
 
-    const payload: TokenPayload = { userId };
-
+  // HELPERS
+  private generateTokens(payload: TokenPayload) {
     const accessToken = generateAccessToken(payload);
     const refreshToken = generateRefreshToken(payload);
 
-    await this.addRefreshToken(userId, refreshToken);
-
     return { accessToken, refreshToken };
   }
 
-  private async getRefreshTokenFromDb(refreshToken: string) {
-    const [token] = await db
+  private async createSessionForUser(userId: number, refreshToken: string) {
+    const refreshTokenHash = sha256(refreshToken);
+
+    const now = new Date();
+    const expiresAt = new Date(now.setDate(now.getDate() + 7));
+
+    const [session] = await db
+      .insert(userSessions)
+      .values({ userId, refreshTokenHash, expiresAt })
+      .returning();
+
+    return session.id;
+  }
+
+  private async getSessionById(sessionId: string) {
+    const [userSession] = await db
       .select()
-      .from(refreshTokens)
-      .where(eq(refreshTokens.token, refreshToken))
+      .from(userSessions)
+      .where(eq(userSessions.id, sessionId))
       .limit(1);
 
-    return token;
+    return userSession;
   }
 
-  private async addRefreshToken(userId: number, refreshToken: string) {
-    await db.insert(refreshTokens).values({ token: refreshToken, userId });
+  private async deleteSession(sessionId: string) {
+    await db.delete(userSessions).where(eq(userSessions.id, sessionId));
   }
 
-  private async removeUserRefreshTokens(userId: number) {
-    await db.delete(refreshTokens).where(eq(refreshTokens.userId, userId));
+  private async updateRefreshTokenForSession(sessionId: string, refreshToken: string) {
+    const refreshTokenHash = this.hashRefreshToken(refreshToken);
+
+    await db.update(userSessions).set({ refreshTokenHash }).where(eq(userSessions.id, sessionId));
+  }
+
+  private hashRefreshToken(refreshToken: string) {
+    return sha256(refreshToken);
   }
 
   private async hashPassword(password: string) {

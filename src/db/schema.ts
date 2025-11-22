@@ -1,4 +1,4 @@
-import { integer, pgTable, serial, text, unique } from "drizzle-orm/pg-core";
+import { integer, pgTable, serial, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 // CORE TABLES
 export const users = pgTable("users", {
@@ -12,11 +12,13 @@ export const companies = pgTable("companies", {
   name: text().notNull().unique(),
 });
 
-export const refreshTokens = pgTable("refresh_tokens", {
-  token: text().primaryKey(),
+export const userSessions = pgTable("user_sessions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  refreshTokenHash: text().notNull(),
   userId: integer()
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
+  expiresAt: timestamp().notNull(),
 });
 
 // ROLES

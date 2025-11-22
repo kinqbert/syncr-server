@@ -5,22 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1762173681446,
-      "tag": "0000_silky_gargoyle",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1763046678016,
-      "tag": "0001_flat_smiling_tiger",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1763216470548,
-      "tag": "0002_windy_shatterstar",
+      "when": 1763809001943,
+      "tag": "0000_sour_gateway",
       "breakpoints": true
     }
   ]
