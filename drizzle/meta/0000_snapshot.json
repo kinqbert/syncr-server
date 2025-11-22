@@ -1,5 +1,5 @@
 {
-  "id": "87d60804-c075-4ac6-9872-8601abdbe197",
+  "id": "8553b9ec-3165-440d-8f5f-63f2d8c99183",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -80,14 +80,14 @@
       "name": "role_permissions",
       "schema": "",
       "columns": {
-        "roleId": {
-          "name": "roleId",
+        "role_id": {
+          "name": "role_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "permissionId": {
-          "name": "permissionId",
+        "permission_id": {
+          "name": "permission_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -95,12 +95,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "role_permissions_roleId_roles_id_fk": {
-          "name": "role_permissions_roleId_roles_id_fk",
+        "role_permissions_role_id_roles_id_fk": {
+          "name": "role_permissions_role_id_roles_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "roles",
           "columnsFrom": [
-            "roleId"
+            "role_id"
           ],
           "columnsTo": [
             "id"
@@ -108,12 +108,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "role_permissions_permissionId_permissions_id_fk": {
-          "name": "role_permissions_permissionId_permissions_id_fk",
+        "role_permissions_permission_id_permissions_id_fk": {
+          "name": "role_permissions_permission_id_permissions_id_fk",
           "tableFrom": "role_permissions",
           "tableTo": "permissions",
           "columnsFrom": [
-            "permissionId"
+            "permission_id"
           ],
           "columnsTo": [
             "id"
@@ -128,8 +128,8 @@
           "name": "role_permissions_roleId_permissionId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "roleId",
-            "permissionId"
+            "role_id",
+            "permission_id"
           ]
         }
       },
@@ -187,20 +187,20 @@
       "name": "user_company_roles",
       "schema": "",
       "columns": {
-        "userId": {
-          "name": "userId",
+        "user_id": {
+          "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "companyId": {
-          "name": "companyId",
+        "company_id": {
+          "name": "company_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "roleId": {
-          "name": "roleId",
+        "role_id": {
+          "name": "role_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
@@ -208,12 +208,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_company_roles_userId_users_id_fk": {
-          "name": "user_company_roles_userId_users_id_fk",
+        "user_company_roles_user_id_users_id_fk": {
+          "name": "user_company_roles_user_id_users_id_fk",
           "tableFrom": "user_company_roles",
           "tableTo": "users",
           "columnsFrom": [
-            "userId"
+            "user_id"
           ],
           "columnsTo": [
             "id"
@@ -221,12 +221,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "user_company_roles_companyId_companies_id_fk": {
-          "name": "user_company_roles_companyId_companies_id_fk",
+        "user_company_roles_company_id_companies_id_fk": {
+          "name": "user_company_roles_company_id_companies_id_fk",
           "tableFrom": "user_company_roles",
           "tableTo": "companies",
           "columnsFrom": [
-            "companyId"
+            "company_id"
           ],
           "columnsTo": [
             "id"
@@ -234,12 +234,12 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "user_company_roles_roleId_roles_id_fk": {
-          "name": "user_company_roles_roleId_roles_id_fk",
+        "user_company_roles_role_id_roles_id_fk": {
+          "name": "user_company_roles_role_id_roles_id_fk",
           "tableFrom": "user_company_roles",
           "tableTo": "roles",
           "columnsFrom": [
-            "roleId"
+            "role_id"
           ],
           "columnsTo": [
             "id"
@@ -254,8 +254,8 @@
           "name": "user_company_roles_userId_companyId_unique",
           "nullsNotDistinct": false,
           "columns": [
-            "userId",
-            "companyId"
+            "user_id",
+            "company_id"
           ]
         }
       },
@@ -274,20 +274,20 @@
           "notNull": true,
           "default": "gen_random_uuid()"
         },
-        "refreshTokenHash": {
-          "name": "refreshTokenHash",
+        "refresh_token_hash": {
+          "name": "refresh_token_hash",
           "type": "text",
           "primaryKey": false,
           "notNull": true
         },
-        "userId": {
-          "name": "userId",
+        "user_id": {
+          "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": true
         },
-        "expiresAt": {
-          "name": "expiresAt",
+        "expires_at": {
+          "name": "expires_at",
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true
@@ -295,12 +295,12 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_sessions_userId_users_id_fk": {
-          "name": "user_sessions_userId_users_id_fk",
+        "user_sessions_user_id_users_id_fk": {
+          "name": "user_sessions_user_id_users_id_fk",
           "tableFrom": "user_sessions",
           "tableTo": "users",
           "columnsFrom": [
-            "userId"
+            "user_id"
           ],
           "columnsTo": [
             "id"

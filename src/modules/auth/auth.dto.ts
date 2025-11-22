@@ -5,9 +5,6 @@ export class RegisterDto {
   email: string;
 
   @IsString()
-  fullName: string;
-
-  @IsString()
   @MinLength(8, { message: "Password must be at least 8 characters long." })
   @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/, {
     message:

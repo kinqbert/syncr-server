@@ -8,4 +8,5 @@ export default defineConfig({
   dbCredentials: {
     url: CONFIG.DATABASE_URL,
   },
+  casing: "snake_case",
 });
